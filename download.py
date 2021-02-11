@@ -1,11 +1,12 @@
 import requests
 from bs4 import BeautifulSoup
 import os
+from concurrent.futures import ThreadPoolExecutor
 
 
 def download_slides(image_link):
-    res = requests.get(image_link)
-    file_name = image_link.split("?")[0].split("/")[-1]
+    res = requests.get(image_link['data-full'])
+    file_name = image_link['data-full'].split("?")[0].split("/")[-1]
     with open(file_name, 'wb') as image_file:
         image_file.write(res.content)
 
@@ -20,5 +21,6 @@ os.chdir(link.split("/")[4].split("?")[0])
 res = requests.get(link)
 soup = BeautifulSoup(res.text, 'lxml')
 images_links = soup.select('.slide_image')
-for image in images_links:
-    download_slides(image['data-full'])
+
+with ThreadPoolExecutor(max_workers=5) as executor:
+    executor.map(download_slides, images_links)
